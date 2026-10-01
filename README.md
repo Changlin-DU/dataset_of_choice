@@ -1,8 +1,8 @@
 # Priced Out: How Did Housing Affordability Change Across U.S. States from 2019 to 2024?
 
-## Project overview
+## Overview
 
-This project examines how housing affordability changed across the 50 U.S. states and Washington, D.C. between 2019 and 2024. I focus on a straightforward question: did household income keep pace with rising home values, and how did higher mortgage rates change the cost of buying a typical home?
+This blog-post examines how housing affordability changed across the 50 U.S. states and Washington, D.C. between 2019 and 2024. I focus on a straightforward question: did household income keep pace with rising home values, and how did higher mortgage rates change the cost of buying a typical home?
 
 Housing affordability cannot be measured by home values alone. A $300,000 home has a different meaning in a state with a median household income of $60,000 than in a state with a median income of $100,000. Financing conditions also matter. Even if a home’s value stays constant, a higher mortgage rate increases the monthly payment required to purchase it. For that reason, this analysis considers home values, household incomes, and mortgage rates together.
 
@@ -21,38 +21,150 @@ The analysis uses two main data sources.
   - [`MORTGAGE30US`](https://fred.stlouisfed.org/series/MORTGAGE30US): 30-Year Fixed Rate Mortgage Average in the United States
   - Weekly observations are downloaded through the FRED API and averaged within each year.
 
-The raw ACS download includes Puerto Rico. I exclude it from the main analysis so that the final dataset consistently covers the 50 states and Washington, D.C.
+The raw ACS download includes Puerto Rico. I exclude it from the main analysis so that the final dataset consistently covers the 50 states and Washington, D.C. The ACS margins of error are retained in the data files for documentation, although the visualizations use the published point estimates.
 
 The Census and FRED API keys are stored locally in `~/.Renviron`. They are not written in the R scripts or included in this repository.
 
-## Measures
+## Measures and calculations
 
-I use three related measures of housing affordability.
+I use three related measures of housing affordability: the home-value-to-income ratio, the relative growth of home values and income, and an illustrative mortgage-payment burden. All measures are constructed programmatically in `code/02_clean_data.R`.
 
 ### Home-value-to-income ratio
 
-The first measure is:
+For state \(s\) in year \(t\), the home-value-to-income ratio is:
 
-```text
-median home value / median household income
-```
+$$
+R_{s,t}
+=
+\frac{V_{s,t}}{Y_{s,t}},
+$$
 
-A higher ratio means that the value of a typical owner-occupied home is larger relative to annual household income. This provides a simple way to compare places with different home values and income levels.
+where:
+
+- \(V_{s,t}\) is the median value of owner-occupied housing units;
+- \(Y_{s,t}\) is median household income.
+
+A higher value of \(R_{s,t}\) means that a typical owner-occupied home is more expensive relative to annual household income.
+
+The change shown in the first visualization is:
+
+$$
+\Delta R_s
+=
+R_{s,2024}
+-
+R_{s,2019}.
+$$
+
+A positive value of \(\Delta R_s\) indicates that median home values increased relative to median household income.
 
 ### Growth in home values and income
 
-I calculate the cumulative percentage growth in median home values and median household income between 2019 and 2024. Both variables are reported in each survey year’s dollars. Comparing their growth rates shows whether household income kept pace with the increase in home values.
+For either median home value or median household income, cumulative growth from 2019 to 2024 is calculated as:
+
+$$
+g_{X,s}
+=
+\left(
+\frac{X_{s,2024}}{X_{s,2019}}
+-
+1
+\right)
+\times 100,
+$$
+
+where \(X\) represents the variable being measured.
+
+The difference between home-value growth and income growth is:
+
+$$
+G_s
+=
+g_{V,s}
+-
+g_{Y,s}.
+$$
+
+A positive value of \(G_s\) means that median home values grew faster than median household income. Both ACS variables are reported in each survey year’s dollars, so this comparison focuses on whether income kept pace with the change in home values.
+
+### Annual mortgage rate
+
+The FRED series contains weekly observations. For each year, I calculate the arithmetic average of the available weekly mortgage rates:
+
+$$
+\bar{i}_t
+=
+\frac{1}{N_t}
+\sum_{w=1}^{N_t} i_{w,t},
+$$
+
+where \(i_{w,t}\) is the mortgage rate in week \(w\) of year \(t\), and \(N_t\) is the number of weekly observations in that year.
+
+The resulting annual averages are 3.94% in 2019 and 6.72% in 2024.
+
+### Illustrative monthly mortgage payment
+
+The mortgage calculation assumes a 20% down payment. The loan principal for state \(s\) in year \(t\) is therefore:
+
+$$
+P_{s,t}
+=
+0.80V_{s,t}.
+$$
+
+The monthly interest rate is:
+
+$$
+r_t
+=
+\frac{\bar{i}_t}{12 \times 100},
+$$
+
+where the division by 100 converts the annual percentage rate into decimal form.
+
+The total number of payments for a 30-year mortgage is:
+
+$$
+n
+=
+30 \times 12
+=
+360.
+$$
+
+The monthly principal-and-interest payment is calculated using the standard fixed-payment mortgage formula:
+
+$$
+M_{s,t}
+=
+P_{s,t}
+\left[
+\frac{
+r_t(1+r_t)^n
+}{
+(1+r_t)^n-1
+}
+\right].
+$$
 
 ### Illustrative mortgage-payment burden
 
-The final measure estimates annual mortgage principal and interest as a percentage of median household income. The calculation assumes:
+The estimated annual mortgage-payment burden is:
 
-- purchase at the state’s median home value;
-- a 20% down payment;
-- a 30-year fixed-rate mortgage;
-- the national average mortgage rate for the relevant year.
+$$
+B_{s,t}
+=
+\frac{
+12M_{s,t}
+}{
+Y_{s,t}
+}
+\times 100.
+$$
 
-The same national mortgage rate is applied to every state within each year. This allows the comparison to show how the combination of changing home values, household incomes, and financing conditions affected estimated payment burdens.
+This measure represents estimated annual principal and interest payments as a percentage of median household income.
+
+The same national mortgage rate is applied to every state within each year. This allows the analysis to show how the combination of changing home values, household incomes, and financing conditions affected the estimated payment burden.
 
 The calculation does not include property taxes, homeowners insurance, maintenance, closing costs, or HOA fees. It should therefore be interpreted as a consistent financing-cost comparison rather than a complete measure of homeownership costs.
 
