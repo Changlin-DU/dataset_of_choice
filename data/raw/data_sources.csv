@@ -1,0 +1,6 @@
+dataset,variable,description,source
+ACS 1-year estimates,B19013_001E,Median household income,U.S. Census Bureau
+ACS 1-year estimates,B19013_001M,Margin of error for median household income,U.S. Census Bureau
+ACS 1-year estimates,B25077_001E,Median value of owner-occupied housing units,U.S. Census Bureau
+ACS 1-year estimates,B25077_001M,Margin of error for median home value,U.S. Census Bureau
+FRED,MORTGAGE30US,30-year fixed-rate mortgage average in the United States,Federal Reserve Bank of St. Louis
